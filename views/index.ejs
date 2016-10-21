@@ -1,0 +1,82 @@
+<html>
+<head>
+	<title><%= title %></title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type ="text/javascript">
+        $(document).ready(function (){
+            // assigning socket object to a variable
+            var socket = io.connect();
+            function askName(){
+                // asking user to enter a name
+                var user_name = prompt("Your name: ");
+                // loading the page for the first time
+                socket.emit("loading_page", {name: user_name});
+            }
+            askName();
+
+            // if empty name listen for server
+            socket.on("empty_name", function(){
+                askName();
+            });
+
+            // for displaying updated users 
+            socket.on("all_users_updates", function(data){
+                console.log("all users",data.all_users);
+                var str ="";
+                for (var key in data.all_users){
+                    str += "<p>Name: "+ data.all_users[key]+"</p>"
+                }
+                $("#target").html(str);
+            });
+
+            // for displaying updated messages
+            socket.on("all_messages_updates", function(data){
+                console.log(data.msg);
+                var str = "";
+                for(var i=0; i<data.msg.length; i++){
+                    str += "<p>"+ data.msg[i].name+": "+ data.msg[i].message+"</p>";
+                }
+                console.log('full string ' , str);
+                $("#messages").html(str);
+            });
+
+            // event that triggered after clicking send message
+            $('form').submit(function(e){
+                e.preventDefault();
+                var message = $("#msg").val();
+                console.log("message is ",message);
+                // passing an action to the server
+                socket.emit("sending_message", {msg: message});
+                $("#msg").val("");
+                // return false;
+            });
+            // $("#submit_form").click(function(){
+            //     var message = $("#msg").val();
+            //     console.log("message is ",message);
+            //     // passing an action to the server
+            //     socket.emit("sending_message", {msg: message});
+            //     $("#msg").val("");
+            // });
+            
+        });
+    </script>
+</head>
+<body>
+    <h2>Group Chat</h2>
+    <div id="message"></div>
+    <h3>All users in the room</h3>
+    <div id="target"></div>
+    <h3>Conversation Board</h3>
+    <div id="messages">
+
+    </div>
+    <form>
+        <input id="msg" type="text" name="new_message" placeholder="Enter your message here">
+        <!-- <input type="submit" value="Send"> -->
+    </form>
+    <!-- <div id="submit_form">Submit form</div> -->
+
+</body>
+</html>
